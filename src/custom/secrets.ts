@@ -1,6 +1,19 @@
 import { SecretsApi } from "../api/endpoints/secrets";
 import { newInfisicalError } from "./errors";
-import { ListSecretsOptions, GetSecretOptions, UpdateSecretOptions, CreateSecretOptions, DeleteSecretOptions } from "../api/types/secrets";
+import { writeFile } from "fs/promises";
+import {
+  ListSecretsOptions,
+  GetSecretOptions,
+  UpdateSecretOptions,
+  CreateSecretOptions,
+  DeleteSecretOptions,
+  GetEnvOptions,
+  GenerateTypesOptions,
+  EnvSchema,
+  InferEnvSchema,
+  TypedEnv,
+} from "../api/types/secrets";
+import { generateEnvTypes } from "./typegen";
 
 const convertBool = (value?: boolean) => (value ? "true" : "false");
 
@@ -10,6 +23,11 @@ const defaultBoolean = (value?: boolean, defaultValue: boolean = false) => {
   }
   return value;
 };
+
+interface GetEnv {
+  <TSchema extends EnvSchema>(options: GetEnvOptions & { schema: TSchema }): Promise<InferEnvSchema<TSchema>>;
+  <TEnv extends object = TypedEnv>(options: GetEnvOptions): Promise<TEnv>;
+}
 
 export default class SecretsClient {
   constructor(private apiClient: SecretsApi) {}
@@ -81,6 +99,55 @@ export default class SecretsClient {
     }
 
     return secrets;
+  };
+
+  private listMergedSecrets = async (options: ListSecretsOptions) => {
+    if (options.includeImports === false) {
+      return (await this.listSecrets(options)).secrets;
+    }
+    return this.listSecretsWithImports(options);
+  };
+
+  /**
+   * Fetches all secrets of an environment (imports included, unless `includeImports` is false) as a typed `{ KEY: value }` object.
+   *
+   * - Pass a `schema` (e.g. a Zod object) to validate the secrets and get the schema's output type back.
+   * - Without a schema, the result is typed by the `InfisicalSecrets` interface (see `generateTypes`), or by the generic you pass.
+   */
+  getEnv: GetEnv = async (options: GetEnvOptions & { schema?: EnvSchema }) => {
+    const { schema, ...listOptions } = options;
+    const secrets = await this.listMergedSecrets(listOptions);
+
+    const env: Record<string, string> = {};
+    for (const secret of secrets) {
+      env[secret.secretKey] = secret.secretValue;
+    }
+
+    return schema ? schema.parse(env) : env;
+  };
+
+  /**
+   * Generates TypeScript declarations for the secrets of an environment, so `getEnv()` returns typed keys.
+   * Only secret names and comments are read, never the values.
+   */
+  generateTypes = async (options: GenerateTypesOptions) => {
+    const { outputFile, processEnv, ...listOptions } = options;
+    const secrets = await this.listMergedSecrets({
+      ...listOptions,
+      expandSecretReferences: false,
+      viewSecretValue: false,
+    });
+
+    const types = generateEnvTypes(
+      secrets.map((secret) => ({ key: secret.secretKey, comment: secret.secretComment })),
+      { processEnv }
+    );
+
+    if (outputFile) {
+      await writeFile(outputFile, types);
+    }
+
+    return types;
   };
 
   getSecret = async (options: GetSecretOptions) => {

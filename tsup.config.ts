@@ -24,4 +24,13 @@ export default defineConfig([
     splitting: false,
     clean: true,
   },
+  {
+    entry: { typegen: "src/cli.ts" },
+    format: "cjs",
+    outDir: "lib/cli",
+    target: "es2022",
+    treeshake: true,
+    splitting: false,
+    clean: true,
+  },
 ]);

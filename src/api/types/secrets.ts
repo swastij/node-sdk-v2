@@ -157,3 +157,43 @@ export type DeleteSecretOptions = {
   secretPath?: string;
   type?: SecretType;
 };
+
+/**
+ * Registry of the secrets available to your application. It is empty by default.
+ *
+ * Augment it (by hand, or with the `infisical-typegen` CLI / `secrets().generateTypes()`)
+ * to get typed keys from `secrets().getEnv()`:
+ *
+ * ```ts
+ * declare module "@infisical/sdk" {
+ *   interface InfisicalSecrets {
+ *     DATABASE_URL: string;
+ *   }
+ * }
+ * ```
+ */
+export interface InfisicalSecrets {}
+
+/** The default shape returned by `secrets().getEnv()`. */
+export type TypedEnv = keyof InfisicalSecrets extends never
+  ? { [key: string]: string | undefined }
+  : InfisicalSecrets;
+
+/**
+ * Anything with a synchronous `parse` method that validates the raw secrets and returns a typed result.
+ * Zod schemas satisfy this out of the box.
+ */
+export type EnvSchema<TOutput = unknown> = {
+  parse: (data: unknown) => TOutput;
+};
+
+export type InferEnvSchema<TSchema extends EnvSchema> = ReturnType<TSchema["parse"]>;
+
+export type GetEnvOptions = Omit<ListSecretsOptions, "viewSecretValue">;
+
+export type GenerateTypesOptions = Omit<GetEnvOptions, "attachToProcessEnv" | "expandSecretReferences"> & {
+  /** When set, the generated declarations are also written to this file. */
+  outputFile?: string;
+  /** Also augment `NodeJS.ProcessEnv` with the secret keys. Useful together with `attachToProcessEnv`. */
+  processEnv?: boolean;
+};

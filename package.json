@@ -16,6 +16,9 @@
       }
     }
   },
+  "bin": {
+    "infisical-typegen": "./lib/cli/typegen.js"
+  },
   "private": false,
   "files": [
     "lib"

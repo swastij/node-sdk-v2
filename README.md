@@ -40,6 +40,48 @@ Starting from **v5**, the SDK requires **Node.js 20 or higher** due to updated A
 ## Documentation
 You can find the documentation for the Node.js SDK on our [SDK documentation page](https://infisical.com/docs/sdks/languages/node).
 
+## Typed secrets
+
+`secrets().getEnv()` returns all secrets of an environment as a typed `{ KEY: value }` object.
+
+### Generate types from your environment
+
+The `infisical-typegen` CLI reads the secret names of an environment (never the values) and writes a declaration file:
+
+```bash
+INFISICAL_TOKEN=<access-token> npx infisical-typegen --project-id <project-id> --environment dev --output infisical-env.d.ts
+```
+
+Once the generated file is included in your `tsconfig.json`, every key is typed:
+
+```ts
+const env = await client.secrets().getEnv({ projectId: "<project-id>", environment: "dev" });
+
+env.DATABASE_URL; // string
+env.DOES_NOT_EXIST; // compile error
+```
+
+Pass `--process-env` to also type `process.env` (useful with `attachToProcessEnv: true`). Run `npx infisical-typegen --help` for all options, or call `client.secrets().generateTypes()` to do the same from code.
+
+### Validate with a schema
+
+Pass a schema (for example a [Zod](https://zod.dev) object) to validate the secrets at runtime and get non-string types:
+
+```ts
+import { z } from "zod";
+
+const env = await client.secrets().getEnv({
+  projectId: "<project-id>",
+  environment: "dev",
+  schema: z.object({
+    DATABASE_URL: z.string().url(),
+    PORT: z.coerce.number(),
+  }),
+});
+
+env.PORT; // number
+```
+
 ## Security
 
 Please do not file GitHub issues or post on our public forum for security vulnerabilities, as they are public!

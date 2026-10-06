@@ -92,3 +92,7 @@ export * from "./api/types";
 
 // Export types and enums from schemas
 export { TDynamicSecretProvider, DynamicSecretProviders, SqlProviders } from "./custom/schemas";
+
+// Export the type generator used by `secrets().generateTypes()`
+export { generateEnvTypes } from "./custom/typegen";
+export type { EnvTypeEntry, GenerateEnvTypesOptions } from "./custom/typegen";
