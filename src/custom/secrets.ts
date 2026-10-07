@@ -12,6 +12,7 @@ import {
   EnvSchema,
   InferEnvSchema,
   TypedEnv,
+  SecretName,
 } from "../api/types/secrets";
 import { generateEnvTypes } from "./typegen";
 
@@ -171,7 +172,7 @@ export default class SecretsClient {
     }
   };
 
-  updateSecret = async (secretName: string, options: UpdateSecretOptions) => {
+  updateSecret = async (secretName: SecretName, options: UpdateSecretOptions) => {
     try {
       return await this.apiClient.updateSecret(secretName, {
         workspaceId: options.projectId,
@@ -192,7 +193,7 @@ export default class SecretsClient {
     }
   };
 
-  createSecret = async (secretName: string, options: CreateSecretOptions) => {
+  createSecret = async (secretName: SecretName, options: CreateSecretOptions) => {
     try {
       return await this.apiClient.createSecret(secretName, {
         workspaceId: options.projectId,
@@ -211,7 +212,7 @@ export default class SecretsClient {
     }
   };
 
-  deleteSecret = async (secretName: string, options: DeleteSecretOptions) => {
+  deleteSecret = async (secretName: SecretName, options: DeleteSecretOptions) => {
     try {
       return await this.apiClient.deleteSecret(secretName, {
         workspaceId: options.projectId,

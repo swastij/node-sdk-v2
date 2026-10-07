@@ -59,6 +59,9 @@ const env = await client.secrets().getEnv({ projectId: "<project-id>", environme
 
 env.DATABASE_URL; // string
 env.DOES_NOT_EXIST; // compile error
+
+// secretName is autocompleted from the generated keys (any other string is still allowed)
+const secret = await client.secrets().getSecret({ projectId: "<project-id>", environment: "dev", secretName: "DATABASE_URL" });
 ```
 
 Pass `--process-env` to also type `process.env` (useful with `attachToProcessEnv: true`). Run `npx infisical-typegen --help` for all options, or call `client.secrets().generateTypes()` to do the same from code.

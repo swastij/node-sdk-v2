@@ -118,7 +118,7 @@ export type ListSecretsOptions = {
 
 export type GetSecretOptions = {
   environment: string;
-  secretName: string;
+  secretName: SecretName;
   expandSecretReferences?: boolean;
   includeImports?: boolean;
   secretPath?: string;
@@ -173,6 +173,9 @@ export type DeleteSecretOptions = {
  * ```
  */
 export interface InfisicalSecrets {}
+
+/** A registered secret key (with autocompletion), or any other string. */
+export type SecretName = keyof InfisicalSecrets | (string & {});
 
 /** The default shape returned by `secrets().getEnv()`. */
 export type TypedEnv = keyof InfisicalSecrets extends never
